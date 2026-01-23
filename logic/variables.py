@@ -53,6 +53,7 @@ def getData():
 
 def getFilebank():
     if _filebank.count == 0:
+        print("calling Init")
         init()
     return _filebank
 
@@ -60,3 +61,5 @@ def save(filename= "userdata.json"):
     filepath = getDirectory()/filename
     with open(filepath, 'w') as f:
         json.dump(_data, f, indent=2)
+
+init()
