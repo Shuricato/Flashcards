@@ -62,4 +62,16 @@ def save(filename= "userdata.json"):
     with open(filepath, 'w') as f:
         json.dump(_data, f, indent=2)
 
+#TODO: find the question doc id in the user data, return the questions in a readable format
+def read_stats(item_ids):
+    for item_id in item_ids:
+        data = getData()
+        
+#TODO: increment/decrement item id's associated rank by 1
+def up_box(item_id):
+    pass
+
+def down_box(item_id):
+    pass
+
 init()
