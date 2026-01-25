@@ -1,5 +1,6 @@
 import sys
 import variables
+import tutorial
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
@@ -117,9 +118,9 @@ class ListWindow(QMainWindow):
     def get_checked_items(self):
         return[row.get_text() for row in self.row_widgets if row.is_checked]
     
-    #TODO: call tutorial screen
     def call_tutorial(self):
-        pass
+        self.tutorial_window = tutorial.TutorialWindow()
+        self.tutorial_window.show()
 
     #TODO: call stat screen for a group of items and solo
     def call_stats_grouped(self):

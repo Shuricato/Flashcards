@@ -1,10 +1,20 @@
 import sys
+import random
 import os
 import json
 from pathlib import Path
 
 _data = None
 _filebank = []
+
+#Rank 1 is the lowest, Rank 5 is the highest
+rank_weights = {
+    1: 50,
+    2: 25,
+    3: 13,
+    4: 7,
+    5: 5
+}
 
 def init(filename= "userdata.json"):
     #Initialising both global variables
@@ -68,10 +78,31 @@ def read_stats(item_ids):
         data = getData()
         
 #TODO: increment/decrement item id's associated rank by 1
-def up_box(item_id):
+def up_rank(item_id):
     pass
 
-def down_box(item_id):
+def down_rank(item_id):
+    pass
+
+def pick_rank():
+    # Calculate total weights (100%)
+	total_weight = 0
+	for weight in rank_weights.values():
+		total_weight += weight
+	
+	# Pick a random value within the total weight
+    # random picks between 0.0 and 1.0, making it a % of 100
+	random_value = random.random() * total_weight
+	
+	# Use the accumulated value to determine the rank
+	cumulative_weight = 0
+	for rank in rank_weights.keys():
+		cumulative_weight += rank_weights.get(rank)
+		if random_value <= cumulative_weight:
+			return rank
+
+#TODO: fetch player data
+def pick_item(rank):
     pass
 
 init()
