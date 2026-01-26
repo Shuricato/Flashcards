@@ -324,51 +324,6 @@
             <div id="status-txt2img"></div>
         </div>
         
-        <!-- Image to Image -->
-        <div id="img2img" class="tab-content">
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>Input Image</h3>
-                    <span class="collapse-icon">▼</span>
-                </div>
-                <div class="section-body">
-                    <input type="file" id="img2img-input" accept="image/*" onchange="loadImage('img2img')">
-                    <div class="canvas-container">
-                        <canvas id="img2img-canvas"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>Image-to-Image Settings</h3>
-                    <span class="collapse-icon">▼</span>
-                </div>
-                <div class="section-body">
-                    <div class="form-group">
-                        <label>Denoising Strength</label>
-                        <div class="slider-container">
-                            <input type="range" id="strength" min="0" max="1" step="0.05" value="0.75" oninput="updateSlider(this)">
-                            <span class="range-value">0.75</span>
-                        </div>
-                        <small style="color: #666;">Higher = more changes from original. 0.5-0.7 for variations, 0.75-0.9 for major changes</small>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button onclick="generate('img2img')" style="flex: 1;">Generate</button>
-                <button class="btn-danger" onclick="interrupt()">Interrupt</button>
-            </div>
-            
-            <div id="progress-img2img" style="display: none;">
-                <div class="progress-bar"><div class="progress-fill"></div></div>
-                <div class="console" id="console-img2img"></div>
-            </div>
-            
-            <div id="status-img2img"></div>
-        </div>
-        
         <!-- LoRA Browser -->
         <div id="lora-browser" class="tab-content">
             <div style="margin-bottom: 20px;">
