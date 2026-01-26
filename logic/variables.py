@@ -17,6 +17,16 @@ rank_weights = {
     5: 5
 }
 
+class Question:
+     def __init__(self, text, answers, correct_answers, source, num_correct):
+        self.text = text
+        self.answers = answers
+        self.correct_answers = correct_answers
+        self.source = source
+        self.num_correct = num_correct
+    #TODO: Question logic, file based ID
+    
+
 def init(filename= "userdata.json"):
     #Initialising both global variables
     global _data

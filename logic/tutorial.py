@@ -13,8 +13,8 @@ class tutorialWindow(QMainWindow):
         main_layout = QVBoxLayout()
 
         #TODO: Tutorial
-        tutorial_label = QTextBrowser("Placeholder")
-        tutorial_label.setWordWrap(True)
+        tutorial_label = QTextBrowser()
+        tutorial_label.setPlainText("Lorem ipsum dolor sit amet.")
         main_layout.addWidget(tutorial_label)
 
         close_btn = QPushButton("Close")
