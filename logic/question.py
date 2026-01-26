@@ -3,10 +3,10 @@ import variables
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
-class tutorialWindow(QMainWindow):
+class questionsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("What is this program?")
+        self.setWindowTitle("Flashcards")
         self.setGeometry(350, 350, 600, 400)
 
         main_widget = QWidget()
@@ -17,10 +17,9 @@ class tutorialWindow(QMainWindow):
 
         #TODO: Question Display
         tutorial_label = QTextBrowser("Placeholder question")
-        tutorial_label.setWordWrap(True)
         main_layout.addWidget(tutorial_label)
 
-        populate_answers()
+        self.populate_answers()
 
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.close)
@@ -30,6 +29,7 @@ class tutorialWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
     def populate_answers(self):
+        
         pass
 
 class tutorialAnswer():

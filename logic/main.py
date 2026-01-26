@@ -1,5 +1,6 @@
 import sys
 import variables
+import question
 import tutorial
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -8,10 +9,10 @@ from PyQt6.QtWidgets import *
 class ListWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("IDK what i'm doing")
+        self.setWindowTitle("Flashcards")
         self.setGeometry(300, 300, 1000, 500)
 
-        self.items = variables.getFilebank()
+        self.items = variables.get_filebank()
 
         main_widget = QWidget()
         main_layout = QVBoxLayout()
@@ -50,8 +51,8 @@ class ListWindow(QMainWindow):
 
         control_layout = QHBoxLayout()
 
-        self.start_btn = QPushButton("Open Questions Folder")
-        self.start_btn.clicked.connect(self.start)
+        self.start_btn = QPushButton("Start!")
+        self.start_btn.clicked.connect(lambda: self.start(self))
         control_layout.addWidget(self.start_btn)
         
         self.add_btn = QPushButton("Open Questions Folder")
@@ -84,7 +85,7 @@ class ListWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
     def populate_list(self):
-        for item in variables.getFilebank():
+        for item in variables.get_filebank():
             self.create_row(item)
     
     def create_row(self, text):
@@ -119,7 +120,7 @@ class ListWindow(QMainWindow):
         return[row.get_text() for row in self.row_widgets if row.is_checked]
     
     def call_tutorial(self):
-        self.tutorial_window = tutorial.TutorialWindow()
+        self.tutorial_window = tutorial.tutorialWindow()
         self.tutorial_window.show()
 
     #TODO: call stat screen for a group of items and solo
@@ -129,9 +130,11 @@ class ListWindow(QMainWindow):
     def call_stats(self):
         pass
 
-    #TODO: call questions screen with list of items
     def start(self):
-        pass
+        questions = self.get_checked_items()
+        variables.update_questions(questions)
+        self.question_window = question.questionsWindow()
+        self.question_window.show()
 
 #A combined widget that allows to check items, reset individual progress, and call the stat screen by ID
 class ListItemRow(QWidget):
@@ -151,6 +154,7 @@ class ListItemRow(QWidget):
         self.label.setMinimumWidth(200)
         layout.addWidget(self.label)
 
+        #TODO: Figure out the on_stat and on_delete(reset) logic
         self.stat_btn = QPushButton("Stats")
         self.stat_btn.setMaximumWidth(60)
         if on_stat:

@@ -6,6 +6,7 @@ from pathlib import Path
 
 _data = None
 _filebank = []
+_active_papers = []
 
 #Rank 1 is the lowest, Rank 5 is the highest
 rank_weights = {
@@ -22,7 +23,7 @@ def init(filename= "userdata.json"):
     global _filebank
 
     #All the logic of the program will execute locally to avoid clashing with the OneDrive storage
-    filepath = getDirectory()/filename
+    filepath = get_directory()/filename
 
     try:
         with open(filepath, 'r') as f:
@@ -30,7 +31,7 @@ def init(filename= "userdata.json"):
         print("Loading successful")
     except FileNotFoundError:
         print("File not found")
-        _data = makeFile(filepath)
+        _data = make_file(filepath)
     except json.JSONDecodeError:
         print(f"Invalid Json")
         _data = {}
@@ -42,40 +43,46 @@ def init(filename= "userdata.json"):
     except all:
         print("Error reading directory")
 
-def getDirectory():
+def update_questions(items):
+     _active_papers = items
+
+def get_questions():
+     return _active_papers
+
+def get_directory():
     if getattr(sys, 'frozen', False):
         localPath = Path(sys.executable).parent
     else:
         localPath = Path(__file__).parent
     return localPath
 
-def makeFile(filepath):
+def make_file(filepath):
     try:
         with open(filepath, 'w') as f:
             pass
     except FileExistsError:
         print("File already exists while trying to create {filepath}")
 
-def getData():
+def get_data():
     if _data is None:
         init()
     return _data
 
-def getFilebank():
+def get_filebank():
     if _filebank.count == 0:
         print("calling Init")
         init()
     return _filebank
 
 def save(filename= "userdata.json"):
-    filepath = getDirectory()/filename
+    filepath = get_directory()/filename
     with open(filepath, 'w') as f:
         json.dump(_data, f, indent=2)
 
 #TODO: find the question doc id in the user data, return the questions in a readable format
 def read_stats(item_ids):
     for item_id in item_ids:
-        data = getData()
+        data = get_data()
         
 #TODO: increment/decrement item id's associated rank by 1
 def up_rank(item_id):
