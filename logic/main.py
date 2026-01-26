@@ -1,4 +1,5 @@
 import sys
+import subprocess
 import variables
 import question
 import tutorial
@@ -12,12 +13,14 @@ class ListWindow(QMainWindow):
         self.setWindowTitle("Flashcards")
         self.setGeometry(300, 300, 1000, 500)
 
-        self.items = variables.get_filebank()
-
         main_widget = QWidget()
         main_layout = QVBoxLayout()
 
         top_layout = QHBoxLayout()
+
+        title = QLabel("Welcome to Flashcards!")
+        title.setStyleSheet("QLabel{font-size: 32pt;}")
+        top_layout.addWidget(title)
         top_layout.addStretch()
 
         tutorial_btn = QPushButton()
@@ -28,7 +31,8 @@ class ListWindow(QMainWindow):
 
         main_layout.insertLayout(0, top_layout)
 
-        self.label = QLabel("Select")
+        self.label = QLabel("Select question files")
+        self.label.setStyleSheet("QLabel{font-size: 24pt;}")
         main_layout.addWidget(self.label)
         
         scroll_area = QScrollArea()
@@ -85,6 +89,10 @@ class ListWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
     def populate_list(self):
+        for row in self.row_widgets:
+            self.scroll_layout.removeWidget(row)
+        self.row_widgets.clear()
+
         for item in variables.get_filebank():
             self.create_row(item)
     
@@ -95,9 +103,15 @@ class ListWindow(QMainWindow):
         self.row_widgets.append(row)
         return row
     
-    #TODO: open the data folder and call an update
     def add_item(self):
-        pass
+        path = variables.get_directory()
+        if sys.platform == 'win32':
+            subprocess.run(['explorer', str(path)])
+        elif sys.platform == 'darwin':
+            subprocess.run(['open', str(path)])
+        else:
+            subprocess.run(['xdg-open', str(path)])
+        #TODO: pause the process until the files are done.
 
     def check_all(self):
         for row in self.row_widgets:

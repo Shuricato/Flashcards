@@ -18,14 +18,35 @@ rank_weights = {
 }
 
 class Question:
-     def __init__(self, text, answers, correct_answers, source, num_correct):
+    def __init__(self, text, answers, correct_answers, source, num_correct, question_id):
+        self.id = question_id  # Composite ID
         self.text = text
         self.answers = answers
         self.correct_answers = correct_answers
         self.source = source
         self.num_correct = num_correct
-    #TODO: Question logic, file based ID
     
+    def __repr__(self):
+        return f"Question(id='{self.id}', text='{self.text[:50]}...', source='{self.source}')"
+
+def generate_file_code(file_path):
+    """Generate a short unique code for the file"""
+    # Option 1: Use first letters of filename
+    import os
+    filename = os.path.basename(file_path)
+    name_without_ext = os.path.splitext(filename)[0]
+
+    # Create abbreviation from filename
+    # e.g., "test-questions.md" -> "TQ"
+    words = re.split(r'[-_\s]', name_without_ext)
+    abbrev = ''.join(word[0].upper() for word in words if word)[:4]
+
+    # Option 2: Add short hash for uniqueness
+    file_hash = hashlib.md5(filename.encode()).hexdigest()[:4]
+
+    return f"{abbrev}{file_hash}"
+
+#TODO: parsers
 
 def init(filename= "userdata.json"):
     #Initialising both global variables
