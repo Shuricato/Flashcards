@@ -13,18 +13,39 @@ QUESTIONS_DIR.mkdir(exist_ok = True)
 
 manager = metaManager(str(QUESTIONS_DIR))
 
-class ListWindow(QMainWindow):
-    def __init__(self):
+class statWindow(QMainWindow):
+    def __init__(self, filenames):
         super().__init__()
-
-        self.setWindowTitle("Flashcards")
-        self.setGeometry(300, 300, 1000, 500)
+        
+        # Ensure files are loaded
+        manager.select_files(filenames)
+        
+        self.display_stats()
+    
+    def display_stats(self):
 
         main_widget = QWidget()
         main_layout = QVBoxLayout()
 
-        rank_1 = QHBoxLayout()
+        for rank in range(1, 6):
+            row_layout = QHBoxLayout()
+
+            stars = "★" * rank + "☆" * (5 - rank)
+            star_label = QLabel(stars)
+            star_label.setStyleSheet("QLabel { font-size: 14pt; color: gold; }")
+            star_label.setFixedWidth(120)
+            row_layout.addWidget(star_label)
+            
+            ranked_questions = manager.query_questions(min_rank=rank, max_rank=rank)
+            total_questions = manager.get_all_loaded_questions()
+
+            text_label = QLabel(f"{len(ranked_questions)}/{len(total_questions)} questions,")
+            row_layout.addWidget(text_label)
+            
+            main_layout.addLayout(row_layout)
+
+        main_widget.setLayout(main_layout)
+        self.setCentralWidget(main_widget)
         
-        #TODO: see if the ranks can be looped
 
 

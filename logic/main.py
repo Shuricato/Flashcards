@@ -154,13 +154,11 @@ class ListWindow(QMainWindow):
 
     #TODO: call stat screen for a group of items and solo
     def call_stats_grouped(self):
-        self.stat_window = stats.statWindow()
-        self.stat_window.files = self.get_checked_items()
+        self.stat_window = stats.statWindow(self.get_checked_items())
         self.stat_window.show()
 
     def call_stats(self, file):
-        self.stat_window = stats.statWindow()
-        self.stat_window.files = [file]
+        self.stat_window = stats.statWindow([file])
         self.stat_window.show()
 
     def start(self):

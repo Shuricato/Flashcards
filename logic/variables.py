@@ -82,6 +82,7 @@ class metaManager:
         """
         Takes a list of filenames (ideally from main.py) and either enables them and/or loads the questions 
         """
+        print("selecting")
         hashes = self.get_hashes(filenames)
         for hash_val in hashes:
             if hash_val in self.available:
@@ -327,8 +328,7 @@ class metaManager:
         
         return questions
 
-    def _parse_csv(self, file_path: Path, file_hash: str, 
-                   rankings: Dict[str, int]) -> List[metaQuestion]:
+    def _parse_csv(self, file_path: Path, file_hash: str, rankings: Dict[str, int]) -> List[metaQuestion]:
         """Parse CSV file format into metaQuestion objects"""
         import csv
         questions = []
