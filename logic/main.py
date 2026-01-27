@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 import subprocess
 from variables import metaManager
@@ -7,10 +8,16 @@ import tutorial
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
-# Subclass QMainWindow to customize your application's main window
+QUESTIONS_DIR = Path(__file__).parent / "questions"
+QUESTIONS_DIR.mkdir(exist_ok = True)
+
+manager = metaManager(str(QUESTIONS_DIR))
+
 class ListWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        manager.scan_files()
+
         self.setWindowTitle("Flashcards")
         self.setGeometry(300, 300, 1000, 500)
 
@@ -36,6 +43,10 @@ class ListWindow(QMainWindow):
         self.label.setStyleSheet("QLabel{font-size: 24pt;}")
         main_layout.addWidget(self.label)
         
+        self.refresh = QPushButton("Refresh list")
+        self.refresh.clicked.connect(self.refresh_list)
+        main_layout.addWidget(self.refresh)
+
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -94,8 +105,12 @@ class ListWindow(QMainWindow):
             self.scroll_layout.removeWidget(row)
         self.row_widgets.clear()
 
-        for item in variables.get_filebank():
-            self.create_row(item)
+        for item in manager.get_all_files():
+            self.create_row(item.filename)
+
+    def refresh_list(self):
+        manager.scan_files()
+        self.populate_list()
     
     def create_row(self, text):
         row = ListItemRow(text, on_delete=self.reset_stats(text), on_stat=self.call_stats)
@@ -105,14 +120,13 @@ class ListWindow(QMainWindow):
         return row
     
     def add_item(self):
-        path = variables.get_directory()
+        path = manager.questions_dir
         if sys.platform == 'win32':
             subprocess.run(['explorer', str(path)])
         elif sys.platform == 'darwin':
             subprocess.run(['open', str(path)])
         else:
             subprocess.run(['xdg-open', str(path)])
-        #TODO: pause the process until the files are done.
 
     def check_all(self):
         for row in self.row_widgets:
@@ -124,12 +138,12 @@ class ListWindow(QMainWindow):
             row.set_checked(False)
         self.status_label.setText("Unchecked all")
     
-    #TODO: call stat reset with a list of items
     def reset_stats_grouped(self):
-        pass
+        for item in self.get_checked_items():
+            manager.delete_metadata(item)
 
     def reset_stats(self, file):
-        pass
+        manager.delete_metadata(file)
 
     def get_checked_items(self):
         return[row.get_text() for row in self.row_widgets if row.is_checked]
@@ -151,7 +165,7 @@ class ListWindow(QMainWindow):
 
     def start(self):
         questions = self.get_checked_items()
-        variables.update_questions(questions)
+        manager.select_files(questions)
         self.question_window = question.questionsWindow()
         self.question_window.show()
 
@@ -173,7 +187,6 @@ class ListItemRow(QWidget):
         self.label.setMinimumWidth(200)
         layout.addWidget(self.label)
 
-        #TODO: Figure out the on_stat and on_delete(reset) logic
         self.stat_btn = QPushButton("Stats")
         self.stat_btn.setMaximumWidth(60)
         if on_stat:

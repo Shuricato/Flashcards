@@ -34,11 +34,11 @@ class metaQuestion:
     rank: int
     answers: List[Dict] = field(default_factory=list) 
     question_type: str = "single_choice"
-    #TODO: multiple choice logic
 
 class metaManager:
     def __init__(self, questions_dir: str = "./questions"):
         self.questions_dir = Path(questions_dir)
+        print(self.questions_dir)
         self.available: Dict[str, metaFile] = {}
         self.loaded: Dict[str, List[metaQuestion]] = {}
 
@@ -379,3 +379,20 @@ class metaManager:
 
     def get_all_files(self):
         return [file_obj for file_obj in self.available.values()]
+
+    def delete_metadata(self, filename: str):
+        file_hash = None
+        for hash_val, file_obj in self.available.items():
+            if file_obj.filename == filename:
+                file_hash = hash_val
+            
+        if not file_hash:
+            raise ValueError(f"File {filename} not found")
+        
+        meta_path = self._get_meta(file_hash)
+
+        if meta_path.exists():
+            meta_path.unlink()
+        
+        if file_hash in self.loaded:
+            del self.loaded[file_hash]
