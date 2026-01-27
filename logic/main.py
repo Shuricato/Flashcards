@@ -1,6 +1,7 @@
 import sys
 import subprocess
-import variables
+from variables import metaManager
+import stats
 import question
 import tutorial
 from PyQt6.QtCore import *
@@ -97,7 +98,7 @@ class ListWindow(QMainWindow):
             self.create_row(item)
     
     def create_row(self, text):
-        row = ListItemRow(text, on_delete=self.reset_stats, on_stat=self.call_stats)
+        row = ListItemRow(text, on_delete=self.reset_stats(text), on_stat=self.call_stats)
         index = len(self.row_widgets)
         self.scroll_layout.insertWidget(index, row)
         self.row_widgets.append(row)
@@ -127,7 +128,7 @@ class ListWindow(QMainWindow):
     def reset_stats_grouped(self):
         pass
 
-    def reset_stats(self):
+    def reset_stats(self, file):
         pass
 
     def get_checked_items(self):
@@ -139,10 +140,14 @@ class ListWindow(QMainWindow):
 
     #TODO: call stat screen for a group of items and solo
     def call_stats_grouped(self):
-        pass
+        self.stat_window = stats.statWindow()
+        self.stat_window.files = self.get_checked_items()
+        self.stat_window.show()
 
-    def call_stats(self):
-        pass
+    def call_stats(self, file):
+        self.stat_window = stats.statWindow()
+        self.stat_window.files = [file]
+        self.stat_window.show()
 
     def start(self):
         questions = self.get_checked_items()
