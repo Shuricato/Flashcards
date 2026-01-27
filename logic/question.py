@@ -1,7 +1,12 @@
-import sys
-import variables
+from pathlib import Path
+from variables import metaManager
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+
+QUESTIONS_DIR = Path(__file__).parent / "questions"
+QUESTIONS_DIR.mkdir(exist_ok = True)
+
+manager = metaManager(str(QUESTIONS_DIR))
 
 class questionsWindow(QMainWindow):
     def __init__(self):
@@ -12,15 +17,31 @@ class questionsWindow(QMainWindow):
         main_widget = QWidget()
         main_layout = QVBoxLayout()
 
-        picked_rank = variables.pick_rank()
-        picked_item = variables.pick_item(picked_rank)
+        question = metaManager.get_weighted_random_question()
 
         #TODO: Question Display
-        tutorial_label = QTextBrowser("Placeholder question")
-        main_layout.addWidget(tutorial_label)
+        question_label = QTextBrowser("Placeholder question")
+        question_label.setText(question.text)
+        main_layout.addWidget(question_label)
 
-        self.populate_answers()
+        self.populate_answers(question)
+        self.row_widgets = []
 
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout()
+        self.scroll_layout.setSpacing(0)
+        self.scroll_layout.setContentsMargins(0,0,0,0)
+
+        self.scroll_layout.addStretch()
+        self.scroll_content.setLayout(self.scroll_layout)
+
+        scroll_area.setWidget(self.scroll_content)
+
+        main_layout.addWidget(scroll_area)
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.close)
         main_layout.addWidget(close_btn)
@@ -28,11 +49,18 @@ class questionsWindow(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-    def populate_answers(self):
-        
+    def populate_answers(self, question):
+        for row in self.row_widgets:
+            self.scroll_layout.removeWidget(row)
+        self.row_widgets.clear()
+
+        for item in question.answers:
+            self.create_row(item)
+
+    def create_row(self, item):
         pass
 
-class tutorialAnswer():
+class questionsAnswer():
     def __init__(self, text, on_delete = None, on_stat = None, parent = None):
         super().__init__(parent)
         self.text = text
