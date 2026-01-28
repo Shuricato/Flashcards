@@ -317,42 +317,79 @@ class metaManager:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
+        # Split by question separator
         sections = content.split('| ------- |')
-        print("Split contents")
+        
         question_num = 1
-        for section in sections[1:]: 
+        for section in sections[1:]:  # Skip header/intro
             lines = [line.strip() for line in section.strip().split('\n') if line.strip()]
             
             if not lines:
                 continue
             
-            question_text = lines[0]
+            # Parse question text (first line that's NOT an instruction)
+            question_text = ""
+            answer_start_idx = 0
             
+            for i, line in enumerate(lines):
+                # Skip instruction lines
+                if 'please choose' in line.lower() or 'there are' in line.lower():
+                    continue
+                # Skip lines that start with | | (answers)
+                if line.startswith('| |'):
+                    answer_start_idx = i
+                    break
+                # Skip source lines
+                if line.startswith('Source:'):
+                    continue
+                # This is the question text
+                if not question_text:
+                    question_text = line
+            
+            if not question_text:
+                continue
+            
+            # Parse answers - only lines that start with | |
             answers = []
             source = ""
             question_type = "single_choice"
             
-            for line in lines[1:]:
-                if line.startswith('Source:'):
-                    source = line.replace('Source:', '').strip()
-                elif line.startswith('| |'):
+            for line in lines[answer_start_idx:]:
+                if line.startswith('| |'):
+                    # Split by | and filter empty strings
                     parts = [p.strip() for p in line.split('|') if p.strip()]
+                    
+                    # Format should be: ['', 'Answer text', 'True' or 'False']
+                    # After filtering empty, should be: ['Answer text', 'True' or 'False']
                     if len(parts) >= 2:
-                        answer_text = parts[1]
-                        is_correct = len(parts) > 2 and parts[2].lower() == 'true'
+                        answer_text = parts[0]
+                        is_correct = parts[1].lower() == 'true'
+                        
                         answers.append({
                             'text': answer_text,
                             'is_correct': is_correct
                         })
-                elif 'correct answers' in line.lower() or '3 correct' in line.lower():
+                
+                elif line.startswith('Source:'):
+                    source = line.replace('Source:', '').strip()
+                
+                # Detect multiple choice
+                elif 'correct answers' in line.lower() or 'there are' in line.lower():
                     question_type = "multiple_choice"
             
-            question_id_key = f"{question_num:03d}"
-            rank = rankings.get(question_id_key, 1)
+            # Skip if no answers found
+            if not answers:
+                print(f"Warning: No answers found for question {question_num}: {question_text[:50]}...")
+                continue
             
+            # Get ranking
+            question_id_key = f"{question_num:03d}"
+            rank = rankings.get(question_id_key, 2)
+            
+            # Create metaQuestion
             question_obj = metaQuestion(
                 id=f"{file_hash}-{question_num:03d}",
-                hash=file_hash,
+                file_hash=file_hash,
                 question_number=question_num,
                 text=question_text,
                 source=source,
@@ -360,7 +397,7 @@ class metaManager:
                 answers=answers,
                 question_type=question_type
             )
-
+            
             questions.append(question_obj)
             question_num += 1
         
