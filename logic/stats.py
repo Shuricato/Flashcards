@@ -8,18 +8,18 @@ import tutorial
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
-QUESTIONS_DIR = Path(__file__).parent / "questions"
-QUESTIONS_DIR.mkdir(exist_ok = True)
-
-manager = metaManager(str(QUESTIONS_DIR))
+_manager = None
 
 class statWindow(QMainWindow):
-    def __init__(self, filenames):
+    #TODO: adjust the entire ui, add a bit more text
+    def __init__(self, filenames, manager):
         super().__init__()
+        global _manager
+        _manager = manager
         
         # Ensure files are loaded
         manager.select_files(filenames)
-        
+
         self.display_stats()
     
     def display_stats(self):
@@ -36,8 +36,8 @@ class statWindow(QMainWindow):
             star_label.setFixedWidth(120)
             row_layout.addWidget(star_label)
             
-            ranked_questions = manager.query_questions(min_rank=rank, max_rank=rank)
-            total_questions = manager.get_all_loaded_questions()
+            ranked_questions = _manager.query_questions(min_rank=rank, max_rank=rank)
+            total_questions = _manager.get_all_loaded_questions()
 
             text_label = QLabel(f"{len(ranked_questions)}/{len(total_questions)} questions,")
             row_layout.addWidget(text_label)

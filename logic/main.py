@@ -113,7 +113,7 @@ class ListWindow(QMainWindow):
         self.populate_list()
     
     def create_row(self, text):
-        row = ListItemRow(text, on_delete=self.reset_stats(text), on_stat=self.call_stats)
+        row = ListItemRow(text, on_delete=self.reset_stats, on_stat=self.call_stats)
         index = len(self.row_widgets)
         self.scroll_layout.insertWidget(index, row)
         self.row_widgets.append(row)
@@ -146,19 +146,18 @@ class ListWindow(QMainWindow):
         manager.delete_metadata(file)
 
     def get_checked_items(self):
-        return[row.get_text() for row in self.row_widgets if row.is_checked]
+        return[row.text for row in self.row_widgets if row.is_checked]
     
     def call_tutorial(self):
         self.tutorial_window = tutorial.tutorialWindow()
         self.tutorial_window.show()
 
-    #TODO: call stat screen for a group of items and solo
     def call_stats_grouped(self):
-        self.stat_window = stats.statWindow(self.get_checked_items())
+        self.stat_window = stats.statWindow(self.get_checked_items(), manager)
         self.stat_window.show()
 
     def call_stats(self, file):
-        self.stat_window = stats.statWindow([file])
+        self.stat_window = stats.statWindow([file], manager)
         self.stat_window.show()
 
     def start(self):
@@ -169,7 +168,7 @@ class ListWindow(QMainWindow):
 
 #A combined widget that allows to check items, reset individual progress, and call the stat screen by ID
 class ListItemRow(QWidget):
-    def __init__(self, text, on_delete = None, on_stat = None, parent = None):
+    def __init__(self, text: str, on_delete = None, on_stat = None, parent = None):
         super().__init__(parent)
         self.text = text
         layout = QHBoxLayout()
@@ -188,7 +187,7 @@ class ListItemRow(QWidget):
         self.stat_btn = QPushButton("Stats")
         self.stat_btn.setMaximumWidth(60)
         if on_stat:
-            self.stat_btn.clicked.connect(lambda: on_stat(self))
+            self.stat_btn.clicked.connect(lambda: on_stat(self.text))
         layout.addWidget(self.stat_btn)
 
         self.dlt_btn = QPushButton()
@@ -196,7 +195,7 @@ class ListItemRow(QWidget):
         self.dlt_btn.setToolTip("Reset Progress")
         self.dlt_btn.setMaximumWidth(60)
         if on_delete:
-            self.dlt_btn.clicked.connect(lambda: on_delete(self))
+            self.dlt_btn.clicked.connect(lambda: on_delete(self.text))
         layout.addWidget(self.dlt_btn)
 
         self.setStyleSheet("ListItemRow { border-bottom: 1px solid #ccc; }")

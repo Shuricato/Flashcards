@@ -29,6 +29,8 @@ class metaFile:
 @dataclass
 class metaQuestion:
     id: str
+    hash: str
+    question_number: int
     text: str
     source: str
     rank: int
@@ -38,7 +40,6 @@ class metaQuestion:
 class metaManager:
     def __init__(self, questions_dir: str = "./questions"):
         self.questions_dir = Path(questions_dir)
-        print(self.questions_dir)
         self.available: Dict[str, metaFile] = {}
         self.loaded: Dict[str, List[metaQuestion]] = {}
 
@@ -70,6 +71,7 @@ class metaManager:
         return files
     
     def get_hashes(self, filenames: List[str]) -> List[str]:
+
         hashes = []
         for filename in filenames:
             for hash_val, file_obj in self.available.items():
@@ -82,13 +84,12 @@ class metaManager:
         """
         Takes a list of filenames (ideally from main.py) and either enables them and/or loads the questions 
         """
-        print("selecting")
+
         hashes = self.get_hashes(filenames)
         for hash_val in hashes:
             if hash_val in self.available:
                 file_obj = self.available[hash_val]
                 file_obj.is_selected = True
-                
                 if hash_val not in self.loaded:
                     self.loaded[hash_val] = self._parse_questions(file_obj)
 
@@ -271,8 +272,7 @@ class metaManager:
         
         return questions
 
-    def _parse_markdown(self, file_path: Path, file_hash: str, 
-                       rankings: Dict[str, int]) -> List[metaQuestion]:
+    def _parse_markdown(self, file_path: Path, file_hash: str, rankings: Dict[str, int]) -> List[metaQuestion]:
         """Parse markdown file format into metaQuestion objects"""
         questions = []
         
@@ -280,7 +280,7 @@ class metaManager:
             content = f.read()
         
         sections = content.split('| ------- |')
-        
+        print("Split contents")
         question_num = 1
         for section in sections[1:]: 
             lines = [line.strip() for line in section.strip().split('\n') if line.strip()]
@@ -314,7 +314,7 @@ class metaManager:
             
             question_obj = metaQuestion(
                 id=f"{file_hash}-{question_num:03d}",
-                file_hash=file_hash,
+                hash=file_hash,
                 question_number=question_num,
                 text=question_text,
                 source=source,
@@ -322,7 +322,7 @@ class metaManager:
                 answers=answers,
                 question_type=question_type
             )
-            
+
             questions.append(question_obj)
             question_num += 1
         
@@ -353,7 +353,7 @@ class metaManager:
                 
                 question_obj = metaQuestion(
                     id=f"{file_hash}-{question_num:03d}",
-                    file_hash=file_hash,
+                    hash=file_hash,
                     question_number=question_num,
                     text=row.get('question', ''),
                     source=row.get('source', ''),
