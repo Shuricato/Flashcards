@@ -9,8 +9,13 @@ QUESTIONS_DIR.mkdir(exist_ok = True)
 manager = metaManager(str(QUESTIONS_DIR))
 
 class questionsWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, manager, return_callback = None):
         super().__init__()
+
+        self.manager = manager
+        self.current_question = None
+        self.return_callback = return_callback
+        self.selected_answers = []
         self.setWindowTitle("Flashcards")
         self.setGeometry(350, 350, 600, 400)
 
