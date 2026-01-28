@@ -16,11 +16,25 @@ manager = metaManager(str(QUESTIONS_DIR))
 class ListWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        manager.scan_files()
-
         self.setWindowTitle("Flashcards")
         self.setGeometry(300, 300, 1000, 500)
-
+        
+        # Create stacked widget to hold multiple screens
+        self.stacked_widget = QStackedWidget()
+        
+        self.menu_screen = self.create_menu_screen()
+        self.stacked_widget.addWidget(self.menu_screen)
+        self.refresh_list()
+        
+        self.setCentralWidget(self.stacked_widget)
+        
+        manager.scan_files()
+    
+    def create_menu_screen(self):
+        """Creates the main menu widget"""
+        main_widget = QWidget()
+        main_layout = QVBoxLayout()
+        
         main_widget = QWidget()
         main_layout = QVBoxLayout()
 
@@ -68,7 +82,7 @@ class ListWindow(QMainWindow):
         control_layout = QHBoxLayout()
 
         self.start_btn = QPushButton("Start!")
-        self.start_btn.clicked.connect(lambda: self.start(self))
+        self.start_btn.clicked.connect(lambda: self.start())
         control_layout.addWidget(self.start_btn)
         
         self.add_btn = QPushButton("Open Questions Folder")
@@ -99,6 +113,30 @@ class ListWindow(QMainWindow):
 
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
+        
+        main_widget.setLayout(main_layout)
+        return main_widget
+    
+    def start(self):
+        checked = self.get_checked_items()
+        if not checked:
+            self.status_label.setText("No files selected")
+            return
+        
+        manager.select_files(checked)
+        
+        # Remove old screen if exists
+        if hasattr(self, 'question_screen'):
+            self.stacked_widget.removeWidget(self.question_screen)
+            self.question_screen.deleteLater()
+        
+        # Create fresh screen
+        self.question_screen = question.questionsWindow(manager, return_callback=self.return_to_menu)
+        self.stacked_widget.addWidget(self.question_screen)
+        self.stacked_widget.setCurrentWidget(self.question_screen)
+
+    def return_to_menu(self):
+        self.stacked_widget.setCurrentWidget(self.menu_screen)
 
     def populate_list(self):
         for row in self.row_widgets:
@@ -139,11 +177,11 @@ class ListWindow(QMainWindow):
         self.status_label.setText("Unchecked all")
     
     def reset_stats_grouped(self):
-        for item in self.get_checked_items():
-            manager.delete_metadata(item)
+        for file in self.get_checked_items():
+            manager.reset_metadata(file)
 
     def reset_stats(self, file):
-        manager.delete_metadata(file)
+        manager.reset_metadata(file)
 
     def get_checked_items(self):
         return[row.text for row in self.row_widgets if row.is_checked]
@@ -160,11 +198,6 @@ class ListWindow(QMainWindow):
         self.stat_window = stats.statWindow([file], manager)
         self.stat_window.show()
 
-    def start(self):
-        questions = self.get_checked_items()
-        manager.select_files(questions)
-        self.question_window = question.questionsWindow()
-        self.question_window.show()
 
 #A combined widget that allows to check items, reset individual progress, and call the stat screen by ID
 class ListItemRow(QWidget):

@@ -82,16 +82,21 @@ class metaManager:
 
     def select_files(self, filenames: List[str]):
         """
-        Takes a list of filenames (ideally from main.py) and either enables them and/or loads the questions 
+        Enables question files and loads their questions
         """
+        for file_obj in self.available.values():
+            file_obj.is_selected = False
 
+        self.loaded.clear()
+
+        # Load only selected files
         hashes = self.get_hashes(filenames)
         for hash_val in hashes:
             if hash_val in self.available:
                 file_obj = self.available[hash_val]
                 file_obj.is_selected = True
-                if hash_val not in self.loaded:
-                    self.loaded[hash_val] = self._parse_questions(file_obj)
+                self.loaded[hash_val] = self._parse_questions(file_obj)
+
 
     def deselect_files(self, filenames: List[str]):
         """
@@ -183,6 +188,39 @@ class metaManager:
                 results.append(question)
         
         return results
+
+    def reset_metadata(self, filename: str):
+        """Reset the .meta.json file"""
+
+        file_hash = None
+        for hash_val, file_obj in self.available.items():
+            if file_obj.filename == filename:
+                file_hash = hash_val
+        
+        if file_hash not in self.available:
+            raise ValueError(f"File with hash {file_hash} not found")
+        
+        file_obj = self.available[file_hash]
+        meta_path = self._get_meta(file_hash)
+        
+        metadata = {
+            "file_hash": file_hash,
+            "source_file": file_obj.filename,
+            "last_updated": datetime.datetime.now().isoformat(),
+            "total_questions": file_obj.total_questions,
+            "rankings": {f"{i+1:03d}": 2 for i in range(file_obj.total_questions)}
+        }
+        
+        # Write the reset metadata
+        with open(meta_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"Reset metadata for {file_obj.filename}")
+        
+        # Also update in-memory questions if loaded
+        if file_hash in self.loaded:
+            for question in self.loaded[file_hash]:
+                question.rank = 2
 
     def get_weighted_random_question(self) -> Optional[metaQuestion]:
         """
@@ -370,12 +408,12 @@ class metaManager:
     def quick_rank_up(self, question: metaQuestion):
         """Increase rank by 1"""
         new_rank = min(5, question.rank +1)
-        self.update_rank(question.file_hash, question.question_number, new_rank)
+        self.update_rank(question.hash, question.question_number, new_rank)
     
     def quick_rank_down(self, question: metaQuestion):
         """Decrease rank by 1"""
         new_rank = max(1, question.rank -1)
-        self.update_rank(question.file_hash, question.question_number, new_rank)
+        self.update_rank(question.hash, question.question_number, new_rank)
 
     def get_all_files(self):
         return [file_obj for file_obj in self.available.values()]
