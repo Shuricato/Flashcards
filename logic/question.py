@@ -20,21 +20,8 @@ class questionsWindow(QWidget):
         top_bar = QHBoxLayout()
         
         self.back_btn = QPushButton("← Back to Menu")
-        self.back_btn.setStyleSheet("""
-            QPushButton {
-                background: none;
-                border: none;
-                color: #666;
-                font-size: 13px;
-                padding: 8px 12px;
-                text-align: left;
-            }
-            QPushButton:hover {
-                color: #000;
-                background-color: #f5f5f5;
-                border-radius: 6px;
-            }
-        """)
+        self.back_btn.setStyleSheet("QPushButton { background: none;border: none;color: #f0f0f0;font-size: 13px;padding: 8px 12px;text-align: left;} " \
+        "QPushButton:hover { color: #000; background-color: #f5f5f5;border-radius: 6px;}")
         self.back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.back_btn.clicked.connect(self.return_to_menu)
         top_bar.addWidget(self.back_btn)
@@ -43,51 +30,16 @@ class questionsWindow(QWidget):
         
         self.tutorial_btn = QPushButton("?")
         self.tutorial_btn.setFixedSize(32, 32)
-        self.tutorial_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f0f0f0;
-                border: none;
-                border-radius: 16px;
-                color: #666;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-            }
-        """)
+        self.tutorial_btn.setStyleSheet("QPushButton { border: none; border-radius: 16px; color: #666; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #e0e0e0; }")
         self.tutorial_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.tutorial_btn.clicked.connect(self.call_tutorial)
         top_bar.addWidget(self.tutorial_btn)
         
         main_layout.addLayout(top_bar)
         
-        # === RANK INDICATOR ===
-        rank_container = QHBoxLayout()
-        rank_container.addStretch()
-        
-        self.rank_display = QLabel()
-        self.rank_display.setStyleSheet("""
-            QLabel {
-                color: #FFB800;
-                font-size: 20px;
-                letter-spacing: 2px;
-            }
-        """)
-        rank_container.addWidget(self.rank_display)
-        
-        rank_container.addStretch()
-        main_layout.addLayout(rank_container)
-        
         # === QUESTION CARD ===
         question_card = QWidget()
-        question_card.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                border-radius: 12px;
-                border: 1px solid #e0e0e0;
-            }
-        """)
+        question_card.setStyleSheet(" QWidget {border-radius: 12px;}")
         
         question_layout = QVBoxLayout()
         question_layout.setContentsMargins(30, 30, 30, 30)
@@ -95,35 +47,33 @@ class questionsWindow(QWidget):
         
         self.question_label = QLabel()
         self.question_label.setWordWrap(True)
-        self.question_label.setStyleSheet("""
-            QLabel {
-                font-size: 18px;
-                font-weight: 500;
-                line-height: 1.5;
-                color: #1a1a1a;
-            }
-        """)
+        self.question_label.setStyleSheet("QLabel {font-size: 18px;font-weight: 500;line-height: 1.5;color: #1a1a1a;}")
         question_layout.addWidget(self.question_label)
         
         # Instruction text
         self.instruction_label = QLabel()
-        self.instruction_label.setStyleSheet("""
-            QLabel {
-                font-size: 13px;
-                color: #888;
-                margin-top: 8px;
-            }
-        """)
+        self.instruction_label.setStyleSheet("QLabel {font-size: 13px;color: #000;margin-top: 8px;}")
         question_layout.addWidget(self.instruction_label)
         
         question_card.setLayout(question_layout)
         main_layout.addWidget(question_card)
+
+        # === RANK INDICATOR ===
+        rank_container = QHBoxLayout()
+        rank_container.addStretch()
+        
+        self.rank_display = QLabel()
+        self.rank_display.setStyleSheet("QLabel { background-color: transparent; color: #FFB800;font-size: 20px;letter-spacing: 2px;}")
+        rank_container.addWidget(self.rank_display)
+        
+        rank_container.addStretch()
+        main_layout.addLayout(rank_container)
         
         # === ANSWERS AREA ===
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        scroll_area.setStyleSheet("QScrollArea { border: none; background: #f0f0f0; }")
         
         self.answers_widget = QWidget()
         self.answers_widget.setStyleSheet("background: transparent;")
@@ -145,23 +95,11 @@ class questionsWindow(QWidget):
         
         self.feedback_label = QLabel()
         self.feedback_label.setWordWrap(True)
-        self.feedback_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                font-weight: 500;
-            }
-        """)
+        self.feedback_label.setStyleSheet("QLabel {font-size: 14px;font-weight: 500;}")
         feedback_layout.addWidget(self.feedback_label)
         
         self.source_label = QLabel()
-        self.source_label.setStyleSheet("""
-            QLabel {
-                font-size: 12px;
-                color: #666;
-                margin-top: 5px;
-                font-style: italic;
-            }
-        """)
+        self.source_label.setStyleSheet("QLabel {font-size: 12px;color: #666;margin-top: 5px;font-style: italic;}")
         feedback_layout.addWidget(self.source_label)
         
         self.feedback_container.setLayout(feedback_layout)
@@ -300,8 +238,7 @@ class questionsWindow(QWidget):
             answer_container = QWidget()
             answer_container.setStyleSheet("""
                 QWidget {
-                    background-color: white;
-                    border: 2px solid #e5e7eb;
+                    background-color: transparent;
                     border-radius: 10px;
                     padding: 4px;
                 }
