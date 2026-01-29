@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 import datetime
-import sys
+import csv
 import random
-import os
+import re
 import json
 from pathlib import Path
 import hashlib
@@ -279,20 +279,6 @@ class metaManager:
         
         return metadata
 
-    def _parse_question_count(self, file: Path) -> int:
-        """Count questions in file without full parsing"""
-        with open(file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        if file.suffix == '.md':
-            separator_count = content.count('| ------- |')
-            return max(0, separator_count - 1)
-        elif file.suffix == '.csv':
-            lines = content.strip().split('\n')
-            return max(0, len(lines) - 1)
-        
-        return 0
-
     def _parse_questions(self, file_obj: metaFile) -> List[metaQuestion]:
         """
         Parse file into metaQuestion objects. Returns a list of metaQuestion instances.
@@ -310,57 +296,93 @@ class metaManager:
         
         return questions
 
-    def _parse_markdown(self, file_path: Path, file_hash: str, rankings: Dict[str, int]) -> List[metaQuestion]:
-        """Parse markdown file format into metaQuestion objects"""
+    def _parse_markdown(self, file_path: Path, file_hash: str, 
+                    rankings: Dict[str, int]) -> List[metaQuestion]:
+        """
+        Parse markdown with format:
+        | ------- |
+        Question text
+        | | Optional instruction line
+        | ------- |
+        | | Answer | True/False |
+        | | Answer | True/False |
+        Source: Author
+        
+        Args:
+            file_path: Path to the .md file
+            file_hash: Hash identifier for the file
+            rankings: Dictionary mapping question IDs to rank values (1-5)
+        
+        Returns:
+            List of metaQuestion objects
+        """
         questions = []
         
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Split by question separator
-        sections = content.split('| ------- |')
+        # Split by separator to get question blocks
+        # Each block alternates: Question text | ------- | Answers
+        blocks = re.split(r'\|\s*-+\s*\|', content)
         
         question_num = 1
-        for section in sections[1:]:  # Skip header/intro
-            lines = [line.strip() for line in section.strip().split('\n') if line.strip()]
+        i = 1  # Skip first block (header/README)
+        
+        while i < len(blocks):
+            # blocks[i] = question text area
+            # blocks[i+1] = answers area
             
-            if not lines:
+            if i + 1 >= len(blocks):
+                break
+            
+            question_block = blocks[i].strip()
+            answer_block = blocks[i + 1].strip()
+            
+            if not question_block or not answer_block:
+                i += 2
                 continue
             
-            # Parse question text (first line that's NOT an instruction)
-            question_text = ""
-            answer_start_idx = 0
+            # Parse question text (first non-empty, non-instruction line)
+            question_text = None
+            question_type = "single_choice"
             
-            for i, line in enumerate(lines):
-                # Skip instruction lines
-                if 'please choose' in line.lower() or 'there are' in line.lower():
+            for line in question_block.split('\n'):
+                line = line.strip()
+                if not line:
                     continue
-                # Skip lines that start with | | (answers)
-                if line.startswith('| |'):
-                    answer_start_idx = i
-                    break
-                # Skip source lines
-                if line.startswith('Source:'):
+                
+                # Skip instruction lines but check for multiple choice indicator
+                if any(phrase in line.lower() for phrase in [
+                    'please choose',
+                    'there are',
+                    'correct answers to this question'
+                ]):
+                    # Detect multiple choice
+                    if 'correct answers' in line.lower() or \
+                    any(f'{num} correct' in line.lower() for num in ['2', '3', '4', '5']):
+                        question_type = "multiple_choice"
                     continue
-                # This is the question text
+                
+                # First real line is the question
                 if not question_text:
                     question_text = line
             
-            if not question_text:
-                continue
-            
-            # Parse answers - only lines that start with | |
+            # Parse answers and source
             answers = []
             source = ""
-            question_type = "single_choice"
             
-            for line in lines[answer_start_idx:]:
+            for line in answer_block.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Answer line: | | Text | True/False |
                 if line.startswith('| |'):
-                    # Split by | and filter empty strings
-                    parts = [p.strip() for p in line.split('|') if p.strip()]
+                    # Remove leading '| |'
+                    remainder = line[3:].strip()
+                    # Split by remaining pipes
+                    parts = [p.strip() for p in remainder.split('|')]
                     
-                    # Format should be: ['', 'Answer text', 'True' or 'False']
-                    # After filtering empty, should be: ['Answer text', 'True' or 'False']
                     if len(parts) >= 2:
                         answer_text = parts[0]
                         is_correct = parts[1].lower() == 'true'
@@ -370,42 +392,51 @@ class metaManager:
                             'is_correct': is_correct
                         })
                 
+                # Source line
                 elif line.startswith('Source:'):
                     source = line.replace('Source:', '').strip()
+            
+            # Create question if valid
+            if question_text and answers:
+                question_id_key = f"{question_num:03d}"
+                rank = rankings.get(question_id_key, 2)
                 
-                # Detect multiple choice
-                elif 'correct answers' in line.lower() or 'there are' in line.lower():
-                    question_type = "multiple_choice"
+                question_obj = metaQuestion(
+                    id=f"{file_hash}-{question_num:03d}",
+                    hash=file_hash,
+                    question_number=question_num,
+                    text=question_text,
+                    source=source,
+                    rank=rank,
+                    answers=answers,
+                    question_type=question_type
+                )
+                
+                questions.append(question_obj)
+                question_num += 1
+            else:
+                print(f"Warning: Skipped invalid question block (no text or answers)")
             
-            # Skip if no answers found
-            if not answers:
-                print(f"Warning: No answers found for question {question_num}: {question_text[:50]}...")
-                continue
-            
-            # Get ranking
-            question_id_key = f"{question_num:03d}"
-            rank = rankings.get(question_id_key, 2)
-            
-            # Create metaQuestion
-            question_obj = metaQuestion(
-                id=f"{file_hash}-{question_num:03d}",
-                file_hash=file_hash,
-                question_number=question_num,
-                text=question_text,
-                source=source,
-                rank=rank,
-                answers=answers,
-                question_type=question_type
-            )
-            
-            questions.append(question_obj)
-            question_num += 1
+            # Move to next question block (skip 2 blocks - we just processed them)
+            i += 2
         
         return questions
 
-    def _parse_csv(self, file_path: Path, file_hash: str, rankings: Dict[str, int]) -> List[metaQuestion]:
-        """Parse CSV file format into metaQuestion objects"""
-        import csv
+
+    def _parse_csv(self, file_path: Path, file_hash: str, 
+                rankings: Dict[str, int]) -> List[metaQuestion]:
+        """
+        Parse CSV file with format:
+        question,answer1,answer2,answer3,answer4,correct,source
+        
+        Args:
+            file_path: Path to the .csv file
+            file_hash: Hash identifier for the file
+            rankings: Dictionary mapping question IDs to rank values (1-5)
+        
+        Returns:
+            List of metaQuestion objects
+        """
         questions = []
         
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -413,34 +444,102 @@ class metaManager:
             question_num = 1
             
             for row in reader:
-                # Assuming CSV columns: question, answer1, answer2, answer3, answer4, correct, source
+                # Skip empty rows
+                if not row.get('question', '').strip():
+                    continue
+                
                 answers = []
+                
+                # Parse correct answer(s)
+                correct_str = row.get('correct', '').strip()
+                
+                if not correct_str:
+                    print(f"Warning: Question {question_num} has no correct answer specified")
+                    continue
+                
+                # Determine if multiple choice
+                if ',' in correct_str:
+                    # Multiple correct answers: "1,3,4"
+                    try:
+                        correct_nums = [int(x.strip()) for x in correct_str.split(',')]
+                        question_type = "multiple_choice"
+                    except ValueError:
+                        print(f"Warning: Invalid correct format in question {question_num}: {correct_str}")
+                        continue
+                else:
+                    # Single correct answer: "2"
+                    try:
+                        correct_nums = [int(correct_str)]
+                        question_type = "single_choice"
+                    except ValueError:
+                        print(f"Warning: Invalid correct format in question {question_num}: {correct_str}")
+                        continue
+                
+                # Build answer list from answer1-answer4 columns
                 for i in range(1, 5):
                     answer_key = f'answer{i}'
-                    if answer_key in row and row[answer_key]:
+                    answer_text = row.get(answer_key, '').strip()
+                    
+                    if answer_text:  # Only add non-empty answers
                         answers.append({
-                            'text': row[answer_key],
-                            'is_correct': row.get('correct', '') == str(i)
+                            'text': answer_text,
+                            'is_correct': i in correct_nums
                         })
                 
-                question_id_key = f"{question_num:03d}"
-                rank = rankings.get(question_id_key, 1)
+                # Validate we have at least 2 answers
+                if len(answers) < 2:
+                    print(f"Warning: Question {question_num} has fewer than 2 answers")
+                    continue
                 
+                # Get ranking
+                question_id_key = f"{question_num:03d}"
+                rank = rankings.get(question_id_key, 2)
+                
+                # Create question object
                 question_obj = metaQuestion(
                     id=f"{file_hash}-{question_num:03d}",
-                    hash=file_hash,
+                    file_hash=file_hash,
                     question_number=question_num,
                     text=row.get('question', ''),
                     source=row.get('source', ''),
                     rank=rank,
                     answers=answers,
-                    question_type='single_choice'
+                    question_type=question_type
                 )
                 
                 questions.append(question_obj)
                 question_num += 1
         
         return questions
+
+    def _parse_question_count(self, file: Path) -> int:
+        """
+        Count questions in file without full parsing.
+        
+        Args:
+            file: Path to the question file
+        
+        Returns:
+            Number of questions in the file
+        """
+        with open(file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if file.suffix == '.md':
+            # Count separators and divide by 2 (each question has 2 separators)
+            import re
+            separators = re.findall(r'\|\s*-+\s*\|', content)
+            # Subtract 1 for potential header, then divide by 2
+            count = max(0, (len(separators) - 1) // 2)
+            return count
+        
+        elif file.suffix == '.csv':
+            # Count non-header, non-empty lines
+            lines = [line.strip() for line in content.strip().split('\n') if line.strip()]
+            # Subtract 1 for header row
+            return max(0, len(lines) - 1)
+        
+        return 0
     
     def quick_rank_up(self, question: metaQuestion):
         """Increase rank by 1"""

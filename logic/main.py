@@ -45,11 +45,12 @@ class ListWindow(QMainWindow):
         top_layout.addWidget(title)
         top_layout.addStretch()
 
-        tutorial_btn = QPushButton()
-        tutorial_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion))
-        tutorial_btn.setToolTip("What is this program?")
-        tutorial_btn.clicked.connect(self.call_tutorial)
-        top_layout.addWidget(tutorial_btn)
+        self.tutorial_btn = QPushButton("?")
+        self.tutorial_btn.setFixedSize(32, 32)
+        self.tutorial_btn.setStyleSheet("QPushButton { background-color: #f0f0f0; border: none; border-radius: 16px; color: #666; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #e0e0e0; }")
+        self.tutorial_btn.setToolTip("What is this program?")
+        self.tutorial_btn.clicked.connect(self.call_tutorial)
+        top_layout.addWidget(self.tutorial_btn)
 
         main_layout.insertLayout(0, top_layout)
 
@@ -119,21 +120,22 @@ class ListWindow(QMainWindow):
     
     def start(self):
         checked = self.get_checked_items()
+        print(checked)
         if not checked:
             self.status_label.setText("No files selected")
             return
-        
-        manager.select_files(checked)
-        
-        # Remove old screen if exists
-        if hasattr(self, 'question_screen'):
-            self.stacked_widget.removeWidget(self.question_screen)
-            self.question_screen.deleteLater()
-        
-        # Create fresh screen
-        self.question_screen = question.questionsWindow(manager, return_callback=self.return_to_menu)
-        self.stacked_widget.addWidget(self.question_screen)
-        self.stacked_widget.setCurrentWidget(self.question_screen)
+        else: 
+            manager.select_files(checked)
+            
+            # Remove old screen if exists
+            if hasattr(self, 'question_screen'):
+                self.stacked_widget.removeWidget(self.question_screen)
+                self.question_screen.deleteLater()
+            
+            # Create fresh screen
+            self.question_screen = question.questionsWindow(manager, return_callback=self.return_to_menu)
+            self.stacked_widget.addWidget(self.question_screen)
+            self.stacked_widget.setCurrentWidget(self.question_screen)
 
     def return_to_menu(self):
         self.stacked_widget.setCurrentWidget(self.menu_screen)

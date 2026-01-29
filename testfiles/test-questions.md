@@ -1,19 +1,9 @@
-# README:
-
-1. All answers are considered false untill we have checked them.
-2. For answers where we are not sure maybe is used to indicate a potentially right answer.
-3. this means possible answers are | False | or | True | or | Maybe |
-
-4. a source should be added for answers below the question.
-5. there are still further questions that are not in this list.
-   | ------- |
-
 # Questions
 
 | ------- |
 Which of the following components in SAP Analytics Cloud is used to build visual, interactive dashboards?
 | | Please choose the correct answer.
-
+| ------- |
 | | SAP Analytics Cloud Modeler | False |
 | | SAP Fiori Designer | False |
 | | SAP Business Application Studio | False |
@@ -29,6 +19,7 @@ What is a unique advantage of using SAP BW/4HANA over traditional data warehousi
 | | Reduced need for data modeling | False |
 | | Direct integration with non-SAP data sources | False |
 Source:EY ifb BW-Experten
+
 | ------- |
 Scenario: A corporation is considering upgrading to SAP BW/4HANA to leverage advanced analytics. Highlight the fundamental enhancements that SAP HANA brings to SAP BW/4HANA for this upgrade.
 | | There are 3 correct answers to this question.
@@ -51,7 +42,6 @@ How can you protect all InfoProviders against displaying their data?
 Source:EY ifb BW-Experten
 
 | ------- |
-
 Which component in SAP BW/4HANA is primarily used for real-time data acquisition?
 | | Please choose the correct answer.
 | ------- |
@@ -62,7 +52,6 @@ Which component in SAP BW/4HANA is primarily used for real-time data acquisition
 Source:EY ifb BW-Experten
 
 | ------- |
-
 Which layer of the layered scalable architecture (LSA++) of SAP BW/4HANA is designed as the main storage for harmonized consistent data?
 | | Please choose the correct answer.
 | ------- |
@@ -82,4 +71,3 @@ Which feature of a DataStore object (advanced) should be made available to impro
 | | Partitioning | True |
 Source: EY ifb BW-Experten
 
-| ------- |
