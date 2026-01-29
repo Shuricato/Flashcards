@@ -1,0 +1,214 @@
+# Question File Formatting Guide
+
+This document explains the two supported formats for question files: Markdown (.md) and CSV (.csv)
+
+## Markdown Format (.md)
+
+### Structure
+
+Each question follows this exact structure:
+
+```
+| ------- |
+Question text goes here
+| | Optional instruction line (e.g., "Please choose the correct answer.")
+| ------- |
+| | Answer option 1 | True |
+| | Answer option 2 | False |
+| | Answer option 3 | False |
+| | Answer option 4 | False |
+Source: Attribution or source name
+
+```
+
+### Important Rules
+
+1. **Separator Lines**: `| ------- |` (pipe, spaces, dashes, spaces, pipe)
+   - First separator starts the question block
+   - Second separator separates question from answers
+   - Each question needs BOTH separators
+
+2. **Question Text**: 
+   - First non-empty line after first separator
+   - Can be any length
+   - Avoid starting with "| |" or "Source:"
+
+3. **Instruction Lines** (Optional):
+   - Lines like "Please choose the correct answer" 
+   - Lines like "There are 3 correct answers to this question"
+   - These determine if the question is single or multiple choice
+   - Will be hidden from the user during quiz
+
+4. **Answer Format**: `| | Answer text | True |` or `| | Answer text | False |`
+   - Must start with `| |` (pipe, space, pipe)
+   - Answer text in the middle
+   - End with `| True |` or `| False |` (case insensitive)
+   - Can have any number of answers (typically 4-5)
+
+5. **Source Line**: `Source: Author Name` or `Source: Book Title`
+   - Optional but recommended
+   - Appears after checking the answer
+   - Can be any attribution text
+
+6. **Multiple Choice Detection**:
+   - Automatically detected from instruction lines containing:
+     - "correct answers" (plural)
+     - "2 correct", "3 correct", "4 correct", etc.
+   - Otherwise defaults to single choice
+
+### Complete Example - Single Choice
+
+```
+| ------- |
+What is the capital of France?
+| | Please choose the correct answer.
+| ------- |
+| | London | False |
+| | Paris | True |
+| | Berlin | False |
+| | Rome | False |
+Source: Geography 101
+
+```
+
+### Complete Example - Multiple Choice
+
+```
+| ------- |
+Which of the following are programming languages?
+| | There are 3 correct answers to this question.
+| ------- |
+| | Python | True |
+| | HTML | False |
+| | JavaScript | True |
+| | CSS | False |
+| | Java | True |
+Source: Computer Science Fundamentals
+
+```
+
+### File Header (Optional)
+
+You can include a README section before the first question:
+
+```
+# README:
+Any notes about the question file
+Multiple lines are fine
+
+| ------- |
+[First question starts here]
+```
+
+## CSV Format (.csv)
+
+### Structure
+
+CSV files use a header row followed by one row per question.
+
+### Column Headers (Required)
+
+```
+question,answer1,answer2,answer3,answer4,correct,source
+```
+
+### Column Descriptions
+
+- **question**: The question text
+- **answer1**: First answer option
+- **answer2**: Second answer option  
+- **answer3**: Third answer option
+- **answer4**: Fourth answer option
+- **correct**: Which answer(s) are correct
+  - Single choice: Use number 1-4 (e.g., "2" for answer2)
+  - Multiple choice: Use comma-separated numbers (e.g., "1,3,4")
+- **source**: Attribution or source (optional, can be empty)
+
+### CSV Rules
+
+1. **Headers must match exactly** (case-sensitive)
+2. **All answer columns must exist** even if some are empty
+3. **Correct column format**:
+   - Single correct: "1", "2", "3", or "4"
+   - Multiple correct: "1,3", "2,4", "1,2,3", etc.
+4. **Commas in text**: Wrap in quotes if answer/question contains commas
+5. **Quotes in text**: Escape with double quotes ""
+
+### Complete Example
+
+```csv
+question,answer1,answer2,answer3,answer4,correct,source
+What is 2 + 2?,3,4,5,6,2,Basic Math
+Which are prime numbers?,2,3,4,5,"1,2",Number Theory
+What does CPU stand for?,Central Processing Unit,Computer Processing Unit,Central Program Unit,Core Processing Unit,1,IT Basics
+"Which are web browsers? (Select all that apply)",Chrome,Windows,Firefox,Linux,"1,3",Web Technology
+What is the capital of Japan?,Beijing,Tokyo,Seoul,Bangkok,2,Geography
+```
+
+### CSV Tips
+
+- Use a spreadsheet program (Excel, Google Sheets) for easy editing
+- Export as CSV when done
+- UTF-8 encoding recommended for special characters
+- Keep answer text concise (under 100 characters each)
+
+## Choosing a Format
+
+**Use Markdown (.md) if:**
+- You prefer writing in a text editor
+- You want more control over formatting
+- You have questions with varying numbers of answers
+- You want to include instruction text
+- You're creating files manually
+
+**Use CSV (.csv) if:**
+- You prefer spreadsheet editing
+- You have exactly 4 answers per question
+- You're importing from existing data
+- You want bulk question creation
+- You're comfortable with spreadsheet formulas
+
+## File Naming
+
+- Use descriptive names: `python-basics.md`, `sap-analytics.csv`
+- Avoid spaces (use hyphens or underscores)
+- Lowercase recommended
+- Place in the `questions/` directory
+
+## Metadata Files
+
+The application automatically creates `.meta.json` files alongside your question files:
+- `test-questions.md` → `test-questions.meta.json`
+- Stores rankings (1-5 stars) for each question
+- Created automatically on first load
+- Can be reset via the UI
+- **Do not edit manually** - managed by the application
+
+## Testing Your Files
+
+1. Place file in `questions/` directory
+2. Launch the application
+3. Click "Refresh list" in main menu
+4. Check the file appears in the list
+5. Select the file and click "Start!"
+6. Verify questions display correctly
+
+## Common Mistakes
+
+### Markdown
+❌ Missing second separator between question and answers
+❌ Forgetting `| |` at start of answer lines
+❌ Using "yes/no" instead of "True/False"
+❌ Inconsistent spacing in separators
+
+### CSV
+❌ Wrong column names or order
+❌ Using letters instead of numbers in "correct" column
+❌ Forgetting to wrap comma-containing text in quotes
+❌ Missing answer columns
+
+## Example Files
+
+See included example files:
+- `python-basics.md` - Markdown format example
+- (Create your own CSV examples as needed)
