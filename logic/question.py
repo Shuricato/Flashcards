@@ -83,6 +83,10 @@ class questionsWindow(QWidget):
         )
         rank_container.addWidget(self.rank_display)
         
+        self.rank_change_label = QLabel()
+        self.rank_change_label.setVisible(False)
+        rank_container.addWidget(self.rank_change_label)
+        
         rank_container.addStretch()
         main_layout.addLayout(rank_container)
         
@@ -179,47 +183,64 @@ class questionsWindow(QWidget):
         
         main_layout.addLayout(button_layout)
         
-        # === NOTIFICATION ===
-        self.notification = QLabel(self)
-        self.notification.setStyleSheet("""
-            QLabel {
-                background-color: rgba(26, 26, 26, 0.95);
-                color: white;
-                font-size: 15px;
-                font-weight: 600;
-                padding: 16px 24px;
-                border-radius: 10px;
-            }
-        """)
-        self.notification.setVisible(False)
-        self.notification.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self.notification_timer = QTimer()
-        self.notification_timer.timeout.connect(lambda: self.notification.setVisible(False))
-        
         self.setLayout(main_layout)
         self.setStyleSheet("background-color: #fafafa;")
         
         # Load first question
         self.load_next_question()
     
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if self.notification.isVisible():
-            self.position_notification()
-    
-    def position_notification(self):
-        notif_width = 220
-        notif_height = 70
-        x = self.width() - notif_width - 30
-        y = 30
-        self.notification.setGeometry(x, y, notif_width, notif_height)
-    
     def show_notification(self, message, duration=2500):
-        self.notification.setText(message)
-        self.notification.setVisible(True)
-        self.position_notification()
-        self.notification_timer.start(duration)
+        # Parse the message to get old and new rank
+        if "→" in message:
+            parts = message.split("\n")[1].split(" → ")
+            old_rank = int(parts[0])
+            new_rank = int(parts[1])
+            change = new_rank - old_rank
+            
+            # Create change text with stars
+            stars = "★" * abs(change)
+            if change > 0:
+                self.rank_change_label.setText(f"+{stars}")
+                color = "#10b981"  # green
+            else:
+                self.rank_change_label.setText(f"-{stars}")
+                color = "#ef4444"  # red
+            
+            self.rank_change_label.setStyleSheet(
+                f"QLabel {{ background-color: transparent; color: {color}; "
+                "font-size: 18px; font-weight: bold; margin-left: 10px; }"
+            )
+            
+            # Show, then fade and update rank
+            self.rank_change_label.setVisible(True)
+            
+            # Fade out after showing
+            QTimer.singleShot(800, self.fade_rank_change)
+            
+            # Update rank display after animation
+            QTimer.singleShot(2800, lambda: self.rank_display.setText(
+                "★" * new_rank + "☆" * (5 - new_rank)
+            ))
+    
+    def fade_rank_change(self):
+        effect = QGraphicsOpacityEffect()
+        self.rank_change_label.setGraphicsEffect(effect)
+
+        animation = QPropertyAnimation(effect, b"opacity")
+        animation.setDuration(2000)
+        animation.setStartValue(1.0)
+        animation.setEndValue(0.0)
+        
+        pos_anim = QPropertyAnimation(self.rank_change_label, b"pos")
+        pos_anim.setDuration(2000)
+        current_pos = self.rank_change_label.pos()
+        pos_anim.setStartValue(current_pos)
+        pos_anim.setEndValue(QPoint(current_pos.x() -30, current_pos.y()))
+
+        animation.finished.connect(lambda: self.rank_change_label.setVisible(False))
+        animation.start()
+        pos_anim.start()
+        self.rank_fade_anim = animation 
     
     def load_next_question(self):
         self.current_question = self.manager.get_weighted_random_question()
@@ -514,9 +535,10 @@ class questionsWindow(QWidget):
         # Show source
         self.source_label.setText(f"Source: {self.current_question.source}")
         
-        # Update rank display
-        stars = "★" * self.current_question.rank + "☆" * (5 - self.current_question.rank)
-        self.rank_display.setText(stars)
+        # Update rank display only if rank didn't change
+        if self.current_question.rank == old_rank:
+            stars = "★" * self.current_question.rank + "☆" * (5 - self.current_question.rank)
+            self.rank_display.setText(stars)
         
         self.feedback_container.setVisible(True)
         self.check_btn.setVisible(False)
