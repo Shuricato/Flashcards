@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 import datetime
 import csv
+import sys
+import os
 import random
 import re
 import json
@@ -39,7 +41,17 @@ class metaQuestion:
 
 class metaManager:
     def __init__(self, questions_dir: str = "./questions"):
-        self.questions_dir = Path(questions_dir)
+        
+        if getattr(sys, "frozen", False):
+            directory = Path(sys.executable).parent
+        else: 
+            directory =  Path(__file__).resolve().parent
+
+        os.chdir(directory)          # <-- FORCE working directory to EXE location
+
+        self.questions_dir = directory / "questions"
+        self.questions_dir.mkdir(exist_ok=True)
+
         self.available: Dict[str, metaFile] = {}
         self.loaded: Dict[str, List[metaQuestion]] = {}
 
@@ -50,7 +62,7 @@ class metaManager:
         files = []
         
         try:
-            for file in self.questions_dir.glob("*"):
+            for file in Path(self.questions_dir).glob("*"):
                 if file.suffix in [".md", ".csv"]:
                     file_meta = file.with_suffix('.meta.json')
                     file_hash = self._get_file_hash(file, file_meta)
