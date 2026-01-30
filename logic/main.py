@@ -121,8 +121,9 @@ class ListWindow(QMainWindow):
     def start(self):
         checked = self.get_checked_items()
         print(checked)
-        if not checked:
-            self.status_label.setText("No files selected")
+        print(len(checked))
+        if len(checked) == 0:
+            QMessageBox.warning(self, "No Questions Selected", "Please select a questions file!")
             return
         else: 
             manager.select_files(checked)
@@ -186,7 +187,7 @@ class ListWindow(QMainWindow):
         manager.reset_metadata(file)
 
     def get_checked_items(self):
-        return[row.text for row in self.row_widgets if row.is_checked]
+        return[row.text for row in self.row_widgets if row.checkbox.isChecked()]
     
     def call_tutorial(self):
         self.tutorial_window = tutorial.tutorialWindow()
@@ -253,6 +254,17 @@ class ListItemRow(QWidget):
         self.label.setText(text)
 
 app = QApplication(sys.argv)
+app.setStyleSheet("""
+            QMessageBox{
+                background-color: #fafafa
+            }
+            QMessageBox QLabel{
+                color: #000
+            }
+            QMessageBox QPushButton{
+                color: #000
+            }
+        """)
 window = ListWindow()
 window.show()
 sys.exit(app.exec())

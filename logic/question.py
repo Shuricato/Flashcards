@@ -13,7 +13,7 @@ class questionsWindow(QWidget):
         self.answer_checkboxes = []
         self.max_selections = 1
         self.radio_group = QButtonGroup(self) 
-        
+
         # Main layout
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(30, 20, 30, 30)
@@ -232,24 +232,21 @@ class questionsWindow(QWidget):
         animation.setEndValue(0.0)
         
         pos_anim = QPropertyAnimation(self.rank_change_label, b"pos")
-        pos_anim.setDuration(2000)
+        pos_anim.setDuration(1000)
         current_pos = self.rank_change_label.pos()
         pos_anim.setStartValue(current_pos)
         pos_anim.setEndValue(QPoint(current_pos.x() -30, current_pos.y()))
 
         animation.finished.connect(lambda: self.rank_change_label.setVisible(False))
-        animation.start()
         pos_anim.start()
+        animation.start()
         self.rank_fade_anim = animation 
     
     def load_next_question(self):
         self.current_question = self.manager.get_weighted_random_question()
         
         if not self.current_question:
-            QMessageBox.warning(
-                self, "No Questions", 
-                "No questions available. Please select files from the main menu."
-            )
+            QMessageBox.warning(self, "No Questions", "No questions available. Please select files from the main menu.")
             self.return_to_menu()
             return
         
