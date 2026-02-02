@@ -7,6 +7,7 @@ import question
 import tutorial
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtGui import QIcon
 
 QUESTIONS_DIR = Path(__file__).parent / "questions"
 QUESTIONS_DIR.mkdir(exist_ok = True)
@@ -90,7 +91,7 @@ class ListWindow(QMainWindow):
         self.add_btn.clicked.connect(self.add_item)
         control_layout.addWidget(self.add_btn)
 
-        self.stat_btn = QPushButton("Open Stats for Checked")
+        self.stat_btn = QPushButton("Open Stats for Selected")
         self.stat_btn.clicked.connect(self.call_stats_grouped)
         control_layout.addWidget(self.stat_btn)
 
@@ -98,17 +99,17 @@ class ListWindow(QMainWindow):
         self.status_label.setStyleSheet("padding: 5px; background-color: #f0f0f0;")
         main_layout.addWidget(self.status_label)
 
-        self.checkAll = QPushButton("Check all")
-        self.checkAll.clicked.connect(self.check_all)
-        control_layout.addWidget(self.checkAll)
-
-        self.uncheckAll = QPushButton("Uncheck all")
-        self.uncheckAll.clicked.connect(self.uncheck_all)
-        control_layout.addWidget(self.uncheckAll)
-
         self.deleteChecked = QPushButton("Reset checked")
         self.deleteChecked.clicked.connect(self.reset_stats_grouped)
         control_layout.addWidget(self.deleteChecked)
+
+        self.checkAll = QPushButton("Select all")
+        self.checkAll.clicked.connect(self.check_all)
+        control_layout.addWidget(self.checkAll)
+
+        self.uncheckAll = QPushButton("Deselect all")
+        self.uncheckAll.clicked.connect(self.uncheck_all)
+        control_layout.addWidget(self.uncheckAll)
 
         main_layout.addLayout(control_layout)
 
@@ -254,6 +255,7 @@ class ListItemRow(QWidget):
         self.label.setText(text)
 
 app = QApplication(sys.argv)
+app.setWindowIcon(QIcon('../flashicon.ico'))
 app.setStyleSheet("""
             QMessageBox{
                 background-color: #fafafa
