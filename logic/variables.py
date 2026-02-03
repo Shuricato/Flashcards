@@ -28,7 +28,6 @@ class metaFile:
     last_updated: str
     is_selected: bool = False
 
-#TODO: add new data field for parsed selection
 @dataclass
 class metaQuestion:
     id: str
@@ -39,6 +38,7 @@ class metaQuestion:
     rank: int
     answers: List[Dict] = field(default_factory=list) 
     question_type: str = "single_choice"
+    instruction: str = ""  # Store the instruction text
 
 class metaManager:
     def __init__(self, questions_dir: str = "./questions"):
@@ -358,18 +358,22 @@ class metaManager:
             # Parse question text (first non-empty, non-instruction line)
             question_text = None
             question_type = "single_choice"
+            instruction = ""
             
             for line in question_block.split('\n'):
                 line = line.strip()
                 if not line:
                     continue
                 
-                # Skip instruction lines but check for multiple choice indicator
+                # Check for instruction lines and store them
                 if any(phrase in line.lower() for phrase in [
                     'please choose',
                     'there are',
                     'correct answers to this question'
                 ]):
+                    # Store the instruction
+                    instruction = line.strip('| ').strip()
+                    
                     # Detect multiple choice
                     if 'correct answers' in line.lower() or \
                     any(f'{num} correct' in line.lower() for num in ['2', '3', '4', '5']):
@@ -422,7 +426,8 @@ class metaManager:
                     source=source,
                     rank=rank,
                     answers=answers,
-                    question_type=question_type
+                    question_type=question_type,
+                    instruction=instruction
                 )
                 
                 questions.append(question_obj)
@@ -517,7 +522,8 @@ class metaManager:
                     source=row.get('source', ''),
                     rank=rank,
                     answers=answers,
-                    question_type=question_type
+                    question_type=question_type,
+                    instruction=""  # CSV format doesn't have explicit instructions
                 )
                 
                 questions.append(question_obj)
@@ -539,11 +545,11 @@ class metaManager:
             content = f.read()
         
         if file.suffix == '.md':
-            # Count separators and divide by 2 (each question has 2 separators)
+            # Each question has exactly 2 separators: one for the question block, one for the answer block
             import re
             separators = re.findall(r'\|\s*-+\s*\|', content)
-            # Subtract 1 for potential header, then divide by 2
-            count = max(0, (len(separators) - 1) // 2)
+            # Number of questions = total separators / 2
+            count = len(separators) // 2
             return count
         
         elif file.suffix == '.csv':

@@ -28,7 +28,7 @@ class questionsWindow(QWidget):
         self.back_btn.setStyleSheet(
             "QPushButton { background: none; border: none;font-size: 13px; "
             "padding: 8px 12px; text-align: left; } "
-            "QPushButton:hover { color: #000; background-color: #f5f5f5; border-radius: 6px; }"
+            "QPushButton:hover { color: palette(window-text); background-color: palette(light); border-radius: 6px; }"
         )
         self.back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.back_btn.clicked.connect(self.return_to_menu)
@@ -242,9 +242,20 @@ class questionsWindow(QWidget):
         animation.finished.connect(lambda: self.rank_change_label.setVisible(False))
         pos_anim.start()
         animation.start()
-        self.rank_fade_anim = animation 
+        # Store both animations so they can be stopped
+        self.rank_fade_anim = animation
+        self.rank_pos_anim = pos_anim
     
     def load_next_question(self):
+        # Stop any ongoing rank change animations
+        if hasattr(self, 'rank_fade_anim') and self.rank_fade_anim:
+            self.rank_fade_anim.stop()
+        if hasattr(self, 'rank_pos_anim') and self.rank_pos_anim:
+            self.rank_pos_anim.stop()
+        
+        # Hide rank change label immediately
+        self.rank_change_label.setVisible(False)
+        
         self.current_question = self.manager.get_weighted_random_question()
         
         if not self.current_question:
@@ -280,13 +291,15 @@ class questionsWindow(QWidget):
         self.max_selections = correct_count
         
         # Update instruction based on question type
-        #TODO: pull label data from metaQuestion
+        self.instruction_label.setText(self.current_question.instruction)
+        """
         if self.current_question.question_type == "multiple_choice":
             self.instruction_label.setText(
                 f"Select all correct answers (select up to {correct_count})"
             )
         else:
             self.instruction_label.setText("Select one answer")
+        """
         
         self.shuffled_answers = self.current_question.answers.copy()
         random.shuffle(self.shuffled_answers)
@@ -365,12 +378,16 @@ class questionsWindow(QWidget):
             }
         """)
 
-        #TODO: ticks and crosses
-        answer_icon = QIcon()
+        # Icon label for tick/cross (hidden initially)
+        icon_label = QLabel()
+        icon_label.setFixedSize(24, 24)
+        icon_label.setVisible(False)
+        icon_label.setStyleSheet("QLabel { padding: 0px; border: none; background: transparent; }")
 
         selector.setText("")
         answer_layout.addWidget(selector)
         answer_layout.addWidget(answer_text, 1)
+        answer_layout.addWidget(icon_label)
         answer_layout.addStretch()
         
         answer_container.setLayout(answer_layout)
@@ -379,6 +396,7 @@ class questionsWindow(QWidget):
         # Store references for later access
         answer_container.selector = selector
         answer_container.answer_text = answer_text
+        answer_container.icon_label = icon_label
         answer_container.index = index
         
         # Make entire container clickable
@@ -455,10 +473,15 @@ class questionsWindow(QWidget):
         is_correct = set(self.selected_answers) == set(correct_indices)
         old_rank = self.current_question.rank
         
+        # Get Qt standard icons
+        style = self.style()
+        tick_icon = style.standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)
+        cross_icon = style.standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)
+        
         # Update answer styling to show correct/incorrect
         for i, container in enumerate(self.answer_widgets):
             if i in correct_indices and i in self.selected_answers:
-                # Correct answer - show in green
+                # Correct answer selected - show in green with tick
                 container.setStyleSheet("""
                     QWidget {
                         background-color: #d1fae5;
@@ -475,8 +498,12 @@ class questionsWindow(QWidget):
                         padding: 4px;
                     }
                 """)
+                # Show tick icon
+                container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
+                container.icon_label.setVisible(True)
+                
             elif i in self.selected_answers:
-                # Wrong selection - show in red
+                # Wrong selection - show in red with cross
                 container.setStyleSheet("""
                     QWidget {
                         background-color: #fee2e2;
@@ -492,6 +519,19 @@ class questionsWindow(QWidget):
                         padding: 4px;
                     }
                 """)
+                # Show cross icon
+                container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
+                container.icon_label.setVisible(True)
+                
+            elif i in correct_indices:
+                # Unselected correct answer - show tick with neutral styling
+                container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
+                container.icon_label.setVisible(True)
+            
+            else:
+                # Incorrect answer that wasn't selected - show cross
+                container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
+                container.icon_label.setVisible(True)
             
             # Disable all selectors
             container.selector.setEnabled(False)
