@@ -1,3 +1,4 @@
+import random
 import sys
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -10,9 +11,10 @@ class questionsWindow(QWidget):
         self.return_callback = return_callback
         self.current_question = None
         self.selected_answers = []
+        self.shuffled_answers  = []
         self.answer_checkboxes = []
         self.max_selections = 1
-        self.radio_group = QButtonGroup(self) 
+        #self.radio_group = QButtonGroup(self) 
 
         # Main layout
         main_layout = QVBoxLayout()
@@ -24,7 +26,7 @@ class questionsWindow(QWidget):
         
         self.back_btn = QPushButton("← Back to Menu")
         self.back_btn.setStyleSheet(
-            "QPushButton { background: none; border: none; color: #f0f0f0; font-size: 13px; "
+            "QPushButton { background: none; border: none;font-size: 13px; "
             "padding: 8px 12px; text-align: left; } "
             "QPushButton:hover { color: #000; background-color: #f5f5f5; border-radius: 6px; }"
         )
@@ -270,14 +272,15 @@ class questionsWindow(QWidget):
         self.answer_widgets.clear()
         self.answer_checkboxes.clear()
 
-        for button in self.radio_group.buttons():
-            self.radio_group.removeButton(button)
+        #for button in self.radio_group.buttons():
+        #    self.radio_group.removeButton(button)
         
         # Calculate correct answers count and set max selections
         correct_count = sum(1 for answer in self.current_question.answers if answer['is_correct'])
         self.max_selections = correct_count
         
         # Update instruction based on question type
+        #TODO: pull label data from metaQuestion
         if self.current_question.question_type == "multiple_choice":
             self.instruction_label.setText(
                 f"Select all correct answers (select up to {correct_count})"
@@ -285,8 +288,11 @@ class questionsWindow(QWidget):
         else:
             self.instruction_label.setText("Select one answer")
         
+        self.shuffled_answers = self.current_question.answers.copy()
+        random.shuffle(self.shuffled_answers)
+
         # Create answer options
-        for i, answer in enumerate(self.current_question.answers):
+        for i, answer in enumerate(self.shuffled_answers):
             answer_container = self._create_answer_widget(i, answer)
             self.answers_layout.addWidget(answer_container)
             self.answer_widgets.append(answer_container)
@@ -309,7 +315,12 @@ class questionsWindow(QWidget):
         answer_layout = QHBoxLayout()
         answer_layout.setContentsMargins(16, 12, 16, 12)
         
+        selector = QCheckBox()
+        selector.toggled.connect(lambda checked, idx=index: self.on_checkbox_toggled(idx, checked))
+        self.answer_checkboxes.append(selector)
+
         # Create appropriate selector based on question type
+        """
         if self.current_question.question_type == "multiple_choice":
             selector = QCheckBox()
             selector.toggled.connect(lambda checked, idx=index: self.on_checkbox_toggled(idx, checked))
@@ -318,6 +329,7 @@ class questionsWindow(QWidget):
             selector = QRadioButton()
             selector.toggled.connect(lambda checked, idx=index: self.on_radio_selected(idx, checked))
             self.radio_group.addButton(selector, index)
+        """
         
         selector.setStyleSheet("""
             QCheckBox, QRadioButton {
@@ -352,10 +364,14 @@ class questionsWindow(QWidget):
                 padding: 4px;
             }
         """)
-        
+
+        #TODO: ticks and crosses
+        answer_icon = QIcon()
+
         selector.setText("")
         answer_layout.addWidget(selector)
         answer_layout.addWidget(answer_text, 1)
+        answer_layout.addStretch()
         
         answer_container.setLayout(answer_layout)
         answer_container.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -374,10 +390,12 @@ class questionsWindow(QWidget):
         
         return answer_container
     
+    """
     def on_radio_selected(self, index, checked):
-        """Handle radio button selection (single choice)"""
+        # Handle radio button selection (single choice)
         if checked:
             self.selected_answers = [index]
+    """
     
     def on_checkbox_toggled(self, index, checked):
         """Handle checkbox toggle with selection limiting"""
@@ -387,19 +405,21 @@ class questionsWindow(QWidget):
                 self.selected_answers.append(index)
             
             # If we've reached the max, disable other checkboxes
+            """
             if len(self.selected_answers) >= self.max_selections:
                 for i, checkbox in enumerate(self.answer_checkboxes):
                     if i not in self.selected_answers:
                         checkbox.setEnabled(False)
                         # Also update container styling to show it's disabled
-                        self.answer_widgets[i].setStyleSheet("""
+                        self.answer_widgets[i].setStyleSheet(" 
                             QWidget {
                                 background-color: #f5f5f5;
                                 border-radius: 10px;
                                 padding: 4px;
                                 opacity: 0.6;
                             }
-                        """)
+                        ")
+            """
         else:
             # Remove from selected answers
             if index in self.selected_answers:
@@ -429,7 +449,7 @@ class questionsWindow(QWidget):
             return
         
         correct_indices = [
-            i for i, ans in enumerate(self.current_question.answers) 
+            i for i, ans in enumerate(self.shuffled_answers) 
             if ans['is_correct']
         ]
         is_correct = set(self.selected_answers) == set(correct_indices)
@@ -437,7 +457,7 @@ class questionsWindow(QWidget):
         
         # Update answer styling to show correct/incorrect
         for i, container in enumerate(self.answer_widgets):
-            if i in correct_indices:
+            if i in correct_indices and i in self.selected_answers:
                 # Correct answer - show in green
                 container.setStyleSheet("""
                     QWidget {
@@ -530,7 +550,7 @@ class questionsWindow(QWidget):
                 )
         
         # Show source
-        self.source_label.setText(f"Source: {self.current_question.source}")
+        self.source_label.setText(f"Reference: {self.current_question.source}")
         
         # Update rank display only if rank didn't change
         if self.current_question.rank == old_rank:

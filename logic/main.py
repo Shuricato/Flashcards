@@ -99,7 +99,7 @@ class ListWindow(QMainWindow):
         self.status_label.setStyleSheet("padding: 5px; background-color: #f0f0f0;")
         main_layout.addWidget(self.status_label)
 
-        self.deleteChecked = QPushButton("Reset checked")
+        self.deleteChecked = QPushButton("Reset selected")
         self.deleteChecked.clicked.connect(self.reset_stats_grouped)
         control_layout.addWidget(self.deleteChecked)
 
@@ -121,8 +121,6 @@ class ListWindow(QMainWindow):
     
     def start(self):
         checked = self.get_checked_items()
-        print(checked)
-        print(len(checked))
         if len(checked) == 0:
             QMessageBox.warning(self, "No Questions Selected", "Please select a questions file!")
             return
@@ -212,7 +210,6 @@ class ListItemRow(QWidget):
         layout.setContentsMargins(5,2,5,2)
 
         self.checkbox = QCheckBox()
-        self.checkbox.toggled.connect(self.on_checkbox_toggled)
         layout.addWidget(self.checkbox)
 
         layout.addStretch()
@@ -238,9 +235,6 @@ class ListItemRow(QWidget):
         self.setStyleSheet("ListItemRow { border-bottom: 1px solid #ccc; }")
         self.setLayout(layout)
 
-    def on_checkbox_toggled(self, checked):
-        print(f"'{self.text}' checkbox is now: {checked}")
-    
     def is_checked(self):
         return self.checkbox.isChecked()
     

@@ -28,6 +28,7 @@ class metaFile:
     last_updated: str
     is_selected: bool = False
 
+#TODO: add new data field for parsed selection
 @dataclass
 class metaQuestion:
     id: str
@@ -434,7 +435,7 @@ class metaManager:
         
         return questions
 
-
+    #TODO: modify parsing to take the answer selection
     def _parse_csv(self, file_path: Path, file_hash: str, 
                 rankings: Dict[str, int]) -> List[metaQuestion]:
         """
