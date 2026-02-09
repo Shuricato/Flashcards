@@ -5,8 +5,8 @@ from variables import metaManager
 import stats
 import question
 import tutorial
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QCheckBox, QMessageBox, QStackedWidget, QApplication, QStyle
 from PyQt6.QtGui import QIcon
 
 QUESTIONS_DIR = Path(__file__).parent / "questions"
@@ -225,7 +225,9 @@ class ListItemRow(QWidget):
         layout.addWidget(self.stat_btn)
 
         self.dlt_btn = QPushButton()
-        self.dlt_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+        style = QApplication.style()
+        if style:
+            self.dlt_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
         self.dlt_btn.setToolTip("Reset Progress")
         self.dlt_btn.setMaximumWidth(60)
         if on_delete:

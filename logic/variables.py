@@ -516,7 +516,7 @@ class metaManager:
                 # Create question object
                 question_obj = metaQuestion(
                     id=f"{file_hash}-{question_num:03d}",
-                    file_hash=file_hash,
+                    hash=file_hash,
                     question_number=question_num,
                     text=row.get('question', ''),
                     source=row.get('source', ''),

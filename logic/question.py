@@ -1,15 +1,40 @@
 import random
 import sys
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
+from typing import Optional
+from PyQt6.QtCore import Qt, QTimer, QPoint, QPropertyAnimation
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QCheckBox, QMessageBox, QScrollArea, QFrame, QGraphicsOpacityEffect, QStyle
+)
+from PyQt6.QtGui import QIcon
+from variables import metaQuestion
 
+
+class AnswerContainer(QWidget):
+    """Custom widget to hold answer selector, text, and index"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.selector: QCheckBox | None = None
+        self.answer_text: QLabel | None = None
+        self.icon_label: QLabel | None = None
+        self.index: int = -1
+        self._toggle_callback = None
+    
+    def set_toggle_callback(self, callback):
+        """Set the callback for mouse press events"""
+        self._toggle_callback = callback
+    
+    def mousePressEvent(self, a0):
+        """Override mousePressEvent to handle clicks"""
+        if self._toggle_callback:
+            self._toggle_callback(a0)
+        super().mousePressEvent(a0)
 class questionsWindow(QWidget):
     def __init__(self, manager, return_callback=None):
         super().__init__()
         self.manager = manager
         self.return_callback = return_callback
-        self.current_question = None
+        self.current_question: Optional[metaQuestion] = None
         self.selected_answers = []
         self.shuffled_answers  = []
         self.answer_checkboxes = []
@@ -312,7 +337,7 @@ class questionsWindow(QWidget):
     
     def _create_answer_widget(self, index, answer):
         """Create a single answer option widget with checkbox/radio button"""
-        answer_container = QWidget()
+        answer_container = AnswerContainer()
         answer_container.setStyleSheet("""
             QWidget {
                 background-color: transparent;
@@ -404,7 +429,7 @@ class questionsWindow(QWidget):
             if sel.isEnabled():
                 sel.setChecked(not sel.isChecked())
         
-        answer_container.mousePressEvent = toggle_selector
+        answer_container.set_toggle_callback(toggle_selector)
         
         return answer_container
     
@@ -462,19 +487,27 @@ class questionsWindow(QWidget):
     
     def check_answer(self):
         """Check if the selected answer(s) are correct"""
-        if not self.selected_answers:
-            QMessageBox.warning(self, "No Selection", "Please select an answer first!")
+        if not self.current_question:
             return
         
+        # Get correct answer indices
         correct_indices = [
             i for i, ans in enumerate(self.shuffled_answers) 
             if ans['is_correct']
         ]
+        
+        # Allow empty selection only if there are no correct answers
+        if not self.selected_answers and correct_indices:
+            QMessageBox.warning(self, "No Selection", "Please select an answer first!")
+            return
+        
         is_correct = set(self.selected_answers) == set(correct_indices)
         old_rank = self.current_question.rank
         
         # Get Qt standard icons
         style = self.style()
+        if style is None:
+            return
         tick_icon = style.standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)
         cross_icon = style.standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton)
         
@@ -499,8 +532,9 @@ class questionsWindow(QWidget):
                     }
                 """)
                 # Show tick icon
-                container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
-                container.icon_label.setVisible(True)
+                if container.icon_label:
+                    container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
+                    container.icon_label.setVisible(True)
                 
             elif i in self.selected_answers:
                 # Wrong selection - show in red with cross
@@ -520,21 +554,25 @@ class questionsWindow(QWidget):
                     }
                 """)
                 # Show cross icon
-                container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
-                container.icon_label.setVisible(True)
+                if container.icon_label:
+                    container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
+                    container.icon_label.setVisible(True)
                 
             elif i in correct_indices:
                 # Unselected correct answer - show tick with neutral styling
-                container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
-                container.icon_label.setVisible(True)
+                if container.icon_label:
+                    container.icon_label.setPixmap(tick_icon.pixmap(24, 24))
+                    container.icon_label.setVisible(True)
             
             else:
                 # Incorrect answer that wasn't selected - show cross
-                container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
-                container.icon_label.setVisible(True)
+                if container.icon_label:
+                    container.icon_label.setPixmap(cross_icon.pixmap(24, 24))
+                    container.icon_label.setVisible(True)
             
             # Disable all selectors
-            container.selector.setEnabled(False)
+            if container.selector:
+                container.selector.setEnabled(False)
             container.setCursor(Qt.CursorShape.ArrowCursor)
         
         # Show feedback
